@@ -38,14 +38,24 @@ class Runner {
     public void mythread1() {
         Random random = new Random();
         for (int i = 0; i < 10_000; i++) {
-           Account.transfer(account1, account2, random.nextInt(100) );
+            synchronized (account1){
+                synchronized (account2){
+                    Account.transfer(account1, account2, random.nextInt(100));
+                }
+            }
+
         }
     }
 
     public void mythread2() {
         Random random = new Random();
         for (int i = 0; i < 10_000; i++) {
-            Account.transfer(account2, account1, random.nextInt(100));
+            synchronized (account1){
+                synchronized (account2){
+                    Account.transfer(account2, account1, random.nextInt(100));
+                }
+            }
+
         }
     }
 
@@ -72,7 +82,7 @@ class Account {
         balance -= value;
     }
 
-    public static void transfer (Account acc1, Account acc2, int value){
+    public static void transfer(Account acc1, Account acc2, int value) {
         acc1.withdraw(value);
         acc2.replenishment(value);
     }
