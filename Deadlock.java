@@ -39,12 +39,39 @@ class Runner {
     private Lock lock1 = new ReentrantLock();
     private Lock lock2 = new ReentrantLock();
 
+    private void takeLocks(Lock lock1, Lock lock2) {
+        boolean lock1taken = false;
+        boolean lock2taken = false;
+
+        while (true) {
+            try {
+                lock1taken = lock1.tryLock();
+                lock2taken = lock2.tryLock();
+            } finally {
+                if (lock1taken && lock2taken) {
+                    return;
+                }
+                if (lock1taken) {
+                    lock1.unlock();
+                }
+                if (lock2taken) {
+                    lock2.unlock();
+                }
+
+                try {
+                    Thread.sleep(1);
+                } catch (InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+
+            }
+        }
+    }
 
     public void mythread1() {
         Random random = new Random();
         for (int i = 0; i < 10_000; i++) {
-            lock1.lock();
-            lock2.lock();
+            takeLocks(lock1, lock2);
             try {
                 Account.transfer(account1, account2, random.nextInt(100));
             } finally {
@@ -57,8 +84,7 @@ class Runner {
     public void mythread2() {
         Random random = new Random();
         for (int i = 0; i < 10_000; i++) {
-            lock1.lock();
-            lock2.lock();
+            takeLocks(lock2, lock1);
             try {
                 Account.transfer(account2, account1, random.nextInt(100));
             } finally {
